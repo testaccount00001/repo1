@@ -1,8 +1,7 @@
 package org.akalu.RestServer;
 
 /**
- * This is a simple utility class, which holds only constant values (web service
- * end points for DataServer).
+ * This is a web service with  end points for access to.
  * 
  * @author Alexey Kalutov
  * @version 0.0.1
