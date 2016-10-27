@@ -41,7 +41,7 @@ public class RestServer{
     port(Integer.valueOf(System.getenv("PORT")));
     staticFileLocation("/public");
 
-    // for testing pusposes
+    // for testing purposes
     get("/test", (request, response) -> {
         response.status(StatusCode.HTTP_OK);
         response.type("application/json");

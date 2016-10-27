@@ -56,7 +56,7 @@ public class GitRepos {
 
 public Boolean clonerepo(String uri) throws IOException, GitAPIException{
 	
-	// do not clone the from the same uri twice
+	// do not clone the repository from the same uri twice
 	// TO DO: more detailed logic is needed here
 	if (maprepo.keySet().contains(uri)){
 		curGit = maprepo.get(uri);
