@@ -8,25 +8,21 @@ Created for reseach aims.
 Overview
 ==================
 
-REST server has 7 endpoints to access to. Currently only http GET methods accepted, all data is returned in JSON format.
+REST server has 5 endpoints to access to. Currently only http GET methods accepted, all data is returned in JSON format.
 
-1) repo:
+1) /  - returns info about all cloned repositories
+
+2) /repo:
 with parameter url - the server clones the git repository which url points to, makes it active and returns general info about it
 without parameters - returns info about current active cloned repository.
 
-2) repo/trees   - returns list of all tree nodes in branch. The branch is specified by parameter branch. Without parameter returns  tree nodes in master branch.
+3) /repo/branches  - returns list of  all branches
 
 
-3) repo/branches  - returns list of  all branches
-
-4) repo/branch/:sha  - returns list of all commits in branch with [provided] sha 
-
-5) repo/blob/:sha - returns blob object
-
-6) search:
+4) /content:
 with required parameter filename - the server search for a file with the name 'filename' and returns its pointer (sha). If such a file does not exist, returns code 404.
 
-7) test:
+5) /test:
 introduced for testing. Returns status code 200 and empty object.
 
 Running Locally
