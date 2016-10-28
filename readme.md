@@ -2,7 +2,7 @@
 =========================
 
 A Simple Java app, which can easily be deployed to Heroku. Implements a RESTful server  to work with git-repos. 
-Created for reseach aims.
+Created for research aims.
 
 
 Overview
