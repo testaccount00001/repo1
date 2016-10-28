@@ -1,7 +1,7 @@
 package org.akalu.RestServer;
 
 /**
- * This is a web service with  end points for access to.
+ * This class implements a simple web service with 5 endpoints.
  * 
  * @author Alexey Kalutov
  * @version 0.0.1
@@ -27,7 +27,11 @@ import org.eclipse.jgit.api.errors.*;
 
 
 import org.akalu.RestServer.GitRepos;
-import org.akalu.RestServer.StatusCode; 
+import org.akalu.RestServer.StatusCode;
+import org.akalu.RestServer.model.Message;
+import org.akalu.RestServer.model.LocalRepoInfo;
+import org.akalu.RestServer.JsonUtils;
+
 
 public class RestServer{
 	
@@ -45,22 +49,39 @@ public class RestServer{
     get("/test", (request, response) -> {
         response.status(StatusCode.HTTP_OK);
         response.type("application/json");
-        return "{}";
+        return JsonUtils.dataToJson(new Message("Server online"));
     });
   
-    // get methods
+
+    // http GET methods
+    
+    get("/", (request, response) -> {
+        response.status(StatusCode.HTTP_OK);
+        response.type("application/json");
+        return JsonUtils.dataToJson(stack.getGitStackStatus());
+    });
+
     get("/repo", (request, response) -> {
     	String url = request.queryParams("url");
-//    	String url = "https://github.com/testaccount00001/repo1";
     	if (stack.clonerepo(url)){
     		response.status(StatusCode.HTTP_OK);
     		response.type("application/json");
-    		return stack.getCurRepoInfo();
+    		return JsonUtils.dataToJson(stack.getCurRepoInfo());
     	}
-	response.status(StatusCode.HTTP_INTERNAL_ERROR);
-    return "{}";
+    	response.status(StatusCode.HTTP_INTERNAL_ERROR);
+        return JsonUtils.dataToJson(new Message("Error during git clone"));
     });
-    
+
+    get("/repo/branches", (request, response) -> {
+    	if (!stack.isStackEmpty()){
+    		response.status(StatusCode.HTTP_OK);
+    		response.type("application/json");
+    		return JsonUtils.dataToJson(stack.getBranches());
+    	}
+    	response.status(StatusCode.HTTP_NOT_FOUND);
+        return JsonUtils.dataToJson(new Message("No active repositories"));
+    });
+
     get("/content", (request, response) -> {
     	String fname = request.queryParams("filename"); 
     	if (fname != null){
@@ -69,9 +90,20 @@ public class RestServer{
     		response.type("application/json");
     		return content;
     	}
-	response.status(StatusCode.HTTP_INTERNAL_ERROR);
-    return "{}";
+    	response.status(StatusCode.HTTP_NOT_FOUND);
+        return JsonUtils.dataToJson(new Message("Nothing found"));
     });
+    
+    // errors processing
+    exception(IllegalArgumentException.class, (e, request, response) -> {
+    	response.status(StatusCode.HTTP_BAD_REQUEST);
+    	response.body(JsonUtils.dataToJson(new Message(e.getMessage())));
+    	});
+
+    exception(IOException.class, (e, request, response) -> {
+    	response.status(StatusCode.HTTP_BAD_REQUEST);
+       	response.body(JsonUtils.dataToJson(new Message(e.getMessage())));
+       	});
     
     }
 // end of class

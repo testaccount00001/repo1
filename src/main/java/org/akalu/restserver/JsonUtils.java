@@ -10,7 +10,7 @@ import java.io.StringWriter;
  * This is a simple utility class for JSON parsing/serialization.
  * 
  * 
- * @author Alex Kalutov
+ * @author Alexey Kalutov
  * @version 0.0.1
  */
 

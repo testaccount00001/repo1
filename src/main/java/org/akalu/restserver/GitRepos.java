@@ -3,16 +3,18 @@ package org.akalu.RestServer;
 import java.util.HashMap;
 import java.util.ArrayList;
 import java.util.Map;
-
+import java.util.List;
 
 import java.io.File;
 import java.io.IOException;
 
-
 import org.eclipse.jgit.api.*;
+import org.eclipse.jgit.api.ListBranchCommand.ListMode;
 import org.eclipse.jgit.api.errors.*;
 import org.eclipse.jgit.api.CreateBranchCommand.SetupUpstreamMode;
+
 import org.eclipse.jgit.internal.storage.file.FileRepository;
+
 import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.ObjectId;
@@ -25,7 +27,7 @@ import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.treewalk.TreeWalk;
 import org.eclipse.jgit.treewalk.filter.PathFilter;
 
-import org.akalu.RestServer.model.LocalRepoInfo;
+import org.akalu.RestServer.model.*;
 import org.akalu.RestServer.JsonUtils;
 
 
@@ -34,7 +36,7 @@ import org.akalu.RestServer.JsonUtils;
  * This class is intended to hold a metainfo about every local git repository, perform git ops on them (stack management)
  * 
  * 
- * @author Alex Kalutov
+ * @author Alexey Kalutov
  * @version 0.0.1
  */
 
@@ -42,7 +44,7 @@ public class GitRepos {
 	private Integer totalRepos;
 	private Integer innerId;
 	private GitRepoDescr curGit;
-	private Map <String,GitRepoDescr> maprepo;
+	private Map <String,GitRepoDescr> mapRepo;
 	private ArrayList<GitRepoDescr> stack;
 	private final String tempDir = "/home";
 
@@ -50,16 +52,23 @@ public class GitRepos {
 		totalRepos = 0;
 		innerId = 0;
 		curGit = null;
-		maprepo = new HashMap <String,GitRepoDescr>();
+		mapRepo = new HashMap <String,GitRepoDescr>();
 		stack = new ArrayList<GitRepoDescr>();
 	}
+	
+public Boolean isStackEmpty(){
+	return  (stack.size() == 0)?true:false;
+}
 
 public Boolean clonerepo(String uri) throws IOException, GitAPIException{
 	
-	// do not clone the repository from the same uri twice
-	// TO DO: more detailed logic is needed here
-	if (maprepo.keySet().contains(uri)){
-		curGit = maprepo.get(uri);
+	if (uri == null){
+		if (curGit != null) return true;
+		return false;
+	}
+	// do not clone the from the same uri twice
+	if (mapRepo.keySet().contains(uri)){
+		curGit = mapRepo.get(uri);
 		return true;
 	}
 	
@@ -73,16 +82,61 @@ public Boolean clonerepo(String uri) throws IOException, GitAPIException{
 	Repository localRepo = git.getRepository();
 	curGit = new GitRepoDescr(innerId++,uri,localPath,git,localRepo);
 	stack.add(curGit);
-    maprepo.put(uri, curGit);
-    return true;
+	totalRepos++;
+	mapRepo.put(uri, curGit);
+	return true;
 }
 
-public String getCurRepoInfo() throws IOException, GitAPIException{
+/*
+ * Returns info about all cloned repos
+ * 
+ */
+public List<LocalRepoInfo> getGitStackStatus(){
+	List<LocalRepoInfo> stackstatus = new ArrayList<LocalRepoInfo>();
+	
+	for (GitRepoDescr grd: stack){
+		stackstatus.add(new LocalRepoInfo(grd.localPath.toString(),grd.url));
+	}
+	return stackstatus;
+}
+
+/*
+ * Returns info about current (active) repository
+ * 
+ */
+
+public LocalRepoInfo getCurRepoInfo() throws IOException, GitAPIException{
 	LocalRepoInfo lri = new LocalRepoInfo();
-	if (curGit == null) return JsonUtils.dataToJson(lri);
+	if (curGit == null) return lri;
 	lri.setDir(curGit.localPath.toString());
 	lri.setUrl(curGit.url);
-	return JsonUtils.dataToJson(lri);
+	return lri;
+}
+
+public List<Commit> getCommits(Ref head)  throws IOException, GitAPIException{
+	
+	List<Commit> lc = new ArrayList<Commit>();
+    try (RevWalk walk = new RevWalk(curGit.repo)) {
+    	RevCommit commit1 = walk.parseCommit(head.getObjectId());
+
+    	walk.markStart(commit1);
+    	for (RevCommit rev : walk) {
+    		lc.add(new Commit(rev.getId().getName(),rev.getShortMessage(),null));
+    	}
+
+    	walk.dispose();
+    }
+    return lc;
+}
+
+public List<Branch> getBranches()  throws IOException, GitAPIException{
+	List<Branch> lb = new ArrayList<Branch>();
+	if (curGit == null) return lb;
+	List<Ref> call = curGit.git.branchList().setListMode(ListMode.ALL).call();
+    for (Ref ref : call) {
+    	lb.add(new Branch(ref.getObjectId().getName(), ref.getName(), getCommits(ref)));
+    }
+	return lb;
 }
 
 public String getFilebyName(String name) throws IOException, GitAPIException{
@@ -119,7 +173,9 @@ public String getFilebyName(String name) throws IOException, GitAPIException{
 
 }
 
-// inner class to describe a git repository
+/*
+ *  inner class to describe a git repository
+ */
 class GitRepoDescr{
     public Integer id;
     public String url;
