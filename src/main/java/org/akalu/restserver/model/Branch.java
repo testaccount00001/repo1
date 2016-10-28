@@ -47,26 +47,3 @@ public class Branch extends GitObject {
 }
 
 
-/*
-public class ListBranches {
-
-    public static void main(String[] args) throws IOException, GitAPIException {
-        try (Repository repository = CookbookHelper.openJGitCookbookRepository()) {
-            System.out.println("Listing local branches:");
-            try (Git git = new Git(repository)) {
-                List<Ref> call = git.branchList().call();
-                for (Ref ref : call) {
-                    System.out.println("Branch: " + ref + " " + ref.getName() + " " + ref.getObjectId().getName());
-                }
-
-                System.out.println("Now including remote branches:");
-                call = git.branchList().setListMode(ListMode.ALL).call();
-                for (Ref ref : call) {
-                    System.out.println("Branch: " + ref + " " + ref.getName() + " " + ref.getObjectId().getName());
-                }
-            }
-        }
-    }
-}
-*/
-
