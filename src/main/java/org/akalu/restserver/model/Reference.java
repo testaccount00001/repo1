@@ -1,4 +1,4 @@
-package org.akalu.RestServer.model;
+package org.akalu.restserver.model;
 
 
 public class Reference{

@@ -1,4 +1,4 @@
-package org.akalu.RestServer;
+package org.akalu.restserver;
 
 /**
  * This class is intended to hold status codes (introduced for possible extention/change of standart Http status codes)

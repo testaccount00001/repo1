@@ -1,18 +1,18 @@
-package org.akalu.RestServer.model;
+package org.akalu.restserver.model;
 
 
-
-
-
+import java.io.Serializable;
 
 /**
- * A POJO class, holds info about Tree in a Git repository
+ * A POJO class, holds rudimentary info about [any] Git-object in a Git repository
  *
  * @author Alexey Kalutov
  * @since 0.0.1
  */
 
-public class GitObject {
+public class GitObject implements Serializable {
+	private static final long serialVersionUID = 1L;
+
 	private String sha;
 	
 	public GitObject(String sha){

@@ -1,4 +1,4 @@
-package org.akalu.RestServer;
+package org.akalu.restserver;
 
 import java.util.HashMap;
 import java.util.ArrayList;
@@ -11,11 +11,9 @@ import java.io.IOException;
 import org.eclipse.jgit.api.*;
 import org.eclipse.jgit.api.ListBranchCommand.ListMode;
 import org.eclipse.jgit.api.errors.*;
-import org.eclipse.jgit.api.CreateBranchCommand.SetupUpstreamMode;
-
-import org.eclipse.jgit.internal.storage.file.FileRepository;
 
 import org.eclipse.jgit.lib.Ref;
+import org.eclipse.jgit.lib.Config;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.ObjectLoader;
@@ -27,27 +25,38 @@ import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.treewalk.TreeWalk;
 import org.eclipse.jgit.treewalk.filter.PathFilter;
 
-import org.akalu.RestServer.model.*;
-import org.akalu.RestServer.JsonUtils;
+import org.akalu.restserver.model.*;
 
 
 
 /**
- * This class is intended to hold a metainfo about every local git repository, perform git ops on them (stack management)
- * 
+ * This class is intended to hold a metainfo about every local git repository,
+ *  perform git ops on them (stack management)
  * 
  * @author Alexey Kalutov
- * @version 0.0.1
+ * @since 0.0.1
  */
 
 public class GitRepos {
+	/** Total number of repos on the server*/
 	private Integer totalRepos;
+	/** Autoincremental counter*/
 	private Integer innerId;
-	private GitRepoDescr curGit;
-	private Map <String,GitRepoDescr> mapRepo;
-	private ArrayList<GitRepoDescr> stack;
+	
 	private final String tempDir = "/home";
 
+	/** Describes active (usually last cloned) repository */
+	private GitRepoDescr curGit;
+	
+	/** Map: (url) -> (local repository descriptor) */
+	private Map <String,GitRepoDescr> mapRepo;
+	
+	/** List of records describing every cloned repository */
+	private ArrayList<GitRepoDescr> stack;
+	
+	/** 
+	 * Non-arguments Constructor
+	 */
 	public GitRepos(){
 		totalRepos = 0;
 		innerId = 0;
@@ -60,13 +69,21 @@ public Boolean isStackEmpty(){
 	return  (stack.size() == 0)?true:false;
 }
 
+/**
+ * This method clones a remote git-repository to temporary local directory
+ * <p>
+ * Note: there is no authorization in this version, hence only public repositories available
+ * @param uri - the URI of remote repository
+ * @return true, if repository successfully cloned
+ */
+
 public Boolean clonerepo(String uri) throws IOException, GitAPIException{
 	
 	if (uri == null){
 		if (curGit != null) return true;
 		return false;
 	}
-	// do not clone the from the same uri twice
+	// do not clone the repository with the same uri twice
 	if (mapRepo.keySet().contains(uri)){
 		curGit = mapRepo.get(uri);
 		return true;
@@ -87,31 +104,49 @@ public Boolean clonerepo(String uri) throws IOException, GitAPIException{
 	return true;
 }
 
-/*
- * Returns info about all cloned repos
+/**
+ * Returns metainfo about all cloned repos on the server 
+ * in the form of list of the records (InnerId, url, localpath, Git type variable, Repository type variable)
+ *   
  * 
  */
-public List<LocalRepoInfo> getGitStackStatus(){
+public List<LocalRepoInfo> getGitStackStatus() throws IOException, GitAPIException{
 	List<LocalRepoInfo> stackstatus = new ArrayList<LocalRepoInfo>();
 	
 	for (GitRepoDescr grd: stack){
-		stackstatus.add(new LocalRepoInfo(grd.localPath.toString(),grd.url));
+		Config config = curGit.repo.getConfig();
+	    String name = config.getString("user", null, "name");
+	    String email = config.getString("user", null, "email");
+		stackstatus.add(new LocalRepoInfo(grd.localPath.toString(),grd.url,name,email));
 	}
 	return stackstatus;
 }
 
-/*
- * Returns info about current (active) repository
+/**
+ * Returns metainfo about current (active) repository
  * 
  */
 
 public LocalRepoInfo getCurRepoInfo() throws IOException, GitAPIException{
 	LocalRepoInfo lri = new LocalRepoInfo();
+
 	if (curGit == null) return lri;
+	Config config = curGit.repo.getConfig();
+    String name = config.getString("user", null, "name");
+    String email = config.getString("user", null, "email");
+
 	lri.setDir(curGit.localPath.toString());
 	lri.setUrl(curGit.url);
+	lri.setOwner(name);
+	lri.setEmail(email);
+	
 	return lri;
 }
+
+/**
+ * Returns list of commits from branch referenced by {@code head}
+ * 
+ */
 
 public List<Commit> getCommits(Ref head)  throws IOException, GitAPIException{
 	
@@ -121,13 +156,22 @@ public List<Commit> getCommits(Ref head)  throws IOException, GitAPIException{
 
     	walk.markStart(commit1);
     	for (RevCommit rev : walk) {
-    		lc.add(new Commit(rev.getId().getName(),rev.getShortMessage(),null));
+    		lc.add(new Commit(rev.getId().getName(),
+    						rev.getAuthorIdent().getName(),
+    						rev.getShortMessage(),
+    						rev.getCommitTime(),
+    						null));
     	}
 
     	walk.dispose();
     }
     return lc;
 }
+
+/**
+ * Returns metainfo about current (active) repository
+ * 
+ */
 
 public List<Branch> getBranches()  throws IOException, GitAPIException{
 	List<Branch> lb = new ArrayList<Branch>();
@@ -138,6 +182,14 @@ public List<Branch> getBranches()  throws IOException, GitAPIException{
     }
 	return lb;
 }
+
+/**
+ * Search file by name and returns its content
+ * <p>
+ * Note: in this version the search is accomplished within the bounds of
+ * last commit
+ */
+
 
 public String getFilebyName(String name) throws IOException, GitAPIException{
 	String text = "";
@@ -173,8 +225,8 @@ public String getFilebyName(String name) throws IOException, GitAPIException{
 
 }
 
-/*
- *  inner class to describe a git repository
+/**
+ *  Inner class to describe a Git repository
  */
 class GitRepoDescr{
     public Integer id;

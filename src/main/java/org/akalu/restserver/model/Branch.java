@@ -1,14 +1,7 @@
-package org.akalu.RestServer.model;
+package org.akalu.restserver.model;
 
 
-import java.io.IOException;
 import java.util.List;
-
-import org.eclipse.jgit.api.Git;
-import org.eclipse.jgit.api.ListBranchCommand.ListMode;
-import org.eclipse.jgit.api.errors.GitAPIException;
-import org.eclipse.jgit.lib.Ref;
-import org.eclipse.jgit.lib.Repository;
 
 
 
@@ -19,6 +12,8 @@ import org.eclipse.jgit.lib.Repository;
  * @since 0.0.1
  */
 public class Branch extends GitObject {
+
+	private static final long serialVersionUID = 3899649469154606565L;
 	private String name;
 	private List<Commit> commits;
 	

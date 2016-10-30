@@ -1,4 +1,4 @@
-package org.akalu.RestServer.model;
+package org.akalu.restserver.model;
 
 
 import java.util.List;
@@ -12,6 +12,8 @@ import java.util.List;
  */
 
 public class TreeNode extends GitObject {
+
+	private static final long serialVersionUID = -5009443763524056115L;
 	private List<GitObject> nodes;
 	
 	public TreeNode(String sha, List<GitObject> nodes){

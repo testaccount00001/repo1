@@ -1,6 +1,5 @@
-package org.akalu.RestServer;
+package org.akalu.restserver;
 
-import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import java.io.IOException;
@@ -11,7 +10,7 @@ import java.io.StringWriter;
  * 
  * 
  * @author Alexey Kalutov
- * @version 0.0.1
+ * @since 0.0.1
  */
 
 public class JsonUtils{

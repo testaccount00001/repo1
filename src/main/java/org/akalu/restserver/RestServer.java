@@ -1,24 +1,15 @@
-package org.akalu.RestServer;
+package org.akalu.restserver;
 
 /**
- * This class implements a simple web service with 5 endpoints.
+ * This class implements a simple RESTful web service with 5 endpoints.
  * 
  * @author Alexey Kalutov
- * @version 0.0.1
+ * @since 0.0.3
+ * 
  */
-
-import java.net.URI;
-import java.net.URISyntaxException;
 
 import static spark.Spark.*;
 import static spark.Spark.get;
-import static spark.Spark.post;
-import spark.Request;
-import spark.Response;
-import spark.Route;
-
-import lombok.Data;
-
 import java.io.IOException;
 
 //import org.eclipse.jgit.api.*;
@@ -26,11 +17,10 @@ import org.eclipse.jgit.api.errors.*;
 
 
 
-import org.akalu.RestServer.GitRepos;
-import org.akalu.RestServer.StatusCode;
-import org.akalu.RestServer.model.Message;
-import org.akalu.RestServer.model.LocalRepoInfo;
-import org.akalu.RestServer.JsonUtils;
+import org.akalu.restserver.GitRepos;
+import org.akalu.restserver.StatusCode;
+import org.akalu.restserver.model.Message;
+import org.akalu.restserver.JsonUtils;
 
 
 public class RestServer{
@@ -45,15 +35,20 @@ public class RestServer{
     port(Integer.valueOf(System.getenv("PORT")));
     staticFileLocation("/public");
 
-    // for testing purposes
-    get("/test", (request, response) -> {
+    /**
+     *  For testing server availability, returns status code 200 and message in the form of 
+     *  serialized object of type Message
+     */
+   get("/test", (request, response) -> {
         response.status(StatusCode.HTTP_OK);
         response.type("application/json");
         return JsonUtils.dataToJson(new Message("Server online"));
     });
   
 
-    // http GET methods
+    /**
+     * 	Returns info about cloned repos on the server
+     */
     
     get("/", (request, response) -> {
         response.status(StatusCode.HTTP_OK);
@@ -61,6 +56,11 @@ public class RestServer{
         return JsonUtils.dataToJson(stack.getGitStackStatus());
     });
 
+    /**
+     * With parameter url - the server clones the git repository which url points to,
+     *  makes it active and returns general info about it
+	 *
+     */
     get("/repo", (request, response) -> {
     	String url = request.queryParams("url");
     	if (stack.clonerepo(url)){
@@ -72,6 +72,11 @@ public class RestServer{
         return JsonUtils.dataToJson(new Message("Error during git clone"));
     });
 
+    /**
+     * 	Returns list of  all branches in the form of serialized objects of type Branch
+     *  
+     *  @see org.akalu.restserver.model.Branch
+     */
     get("/repo/branches", (request, response) -> {
     	if (!stack.isStackEmpty()){
     		response.status(StatusCode.HTTP_OK);
@@ -82,6 +87,10 @@ public class RestServer{
         return JsonUtils.dataToJson(new Message("No active repositories"));
     });
 
+    /**
+     * 	With required parameter filename - the server search for a file by name
+     *  and returns its content
+     */
     get("/content", (request, response) -> {
     	String fname = request.queryParams("filename"); 
     	if (fname != null){
@@ -94,7 +103,10 @@ public class RestServer{
         return JsonUtils.dataToJson(new Message("Nothing found"));
     });
     
-    // errors processing
+    /**
+     * 	Errors processing 	
+     */
+    
     exception(IllegalArgumentException.class, (e, request, response) -> {
     	response.status(StatusCode.HTTP_BAD_REQUEST);
     	response.body(JsonUtils.dataToJson(new Message(e.getMessage())));

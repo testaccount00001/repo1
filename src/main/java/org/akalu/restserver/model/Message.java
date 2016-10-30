@@ -1,7 +1,6 @@
-package org.akalu.RestServer.model;
+package org.akalu.restserver.model;
 
-
-
+import java.io.Serializable;
 
 /**
  * A POJO class, holds a [string] message
@@ -9,7 +8,10 @@ package org.akalu.RestServer.model;
  * @author Alexey Kalutov
  * @since 0.0.1
  */
-public class Message{
+public class Message implements Serializable{
+
+	private static final long serialVersionUID = -7647619618070649931L;
+
 	private String message;
 	
 	public Message(String msg){
